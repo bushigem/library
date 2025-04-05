@@ -1,0 +1,5 @@
+Django==5.0.1
+mysqlclient==2.2.1
+django-simpleui==2023.12.12
+Pillow==10.2.0
+python-dotenv==1.0.0

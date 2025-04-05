@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>图书列表</h2>
+    
+    <!-- 搜索框 -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <form action="{% url 'search_books' %}" method="get" class="d-flex">
+                <input type="text" name="q" class="form-control me-2" placeholder="搜索书名、作者或ISBN">
+                <button type="submit" class="btn btn-outline-primary">搜索</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 图书列表 -->
+    <div class="row">
+        {% for book in books %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                {% if book.cover_image_url %}
+                <img src="{{ book.cover_image_url }}" class="card-img-top" alt="{{ book.title }}" style="height: 200px; object-fit: cover;">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ book.title }}</h5>
+                    <p class="card-text">作者：{{ book.author }}</p>
+                    <p class="card-text">ISBN：{{ book.isbn }}</p>
+                    <p class="card-text">可借数量：{{ book.available_quantity }}</p>
+                    <a href="{% url 'book_detail' book.id %}" class="btn btn-primary">查看详情</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <p class="text-center">暂无图书</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
