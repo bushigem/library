@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>我的借阅</h2>
+    <div class="row">
+        {% if borrows %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>书名</th>
+                        <th>借阅日期</th>
+                        <th>应还日期</th>
+                        <th>状态</th>
+                        <th>罚金</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for borrow in borrows %}
+                    <tr {% if borrow.is_overdue %}class="table-danger"{% endif %}>
+                        <td>{{ borrow.book.title }}</td>
+                        <td>{{ borrow.borrow_date|date:"Y-m-d H:i" }}</td>
+                        <td>{{ borrow.due_date|date:"Y-m-d H:i" }}</td>
+                        <td>
+                            <span class="badge {% if borrow.status == 'borrowed' %}bg-primary{% elif borrow.status == 'overdue' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                {{ borrow.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if borrow.is_overdue %}
+                            ¥{{ borrow.get_fine_amount|floatformat:2 }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if borrow.status != 'returned' %}
+                                {% if borrow.can_renew %}
+                                <a href="{% url 'renew_book' borrow.id %}" class="btn btn-info btn-sm me-2">续借</a>
+                                {% endif %}
+                                <a href="{% url 'return_book' borrow.id %}" class="btn btn-primary btn-sm">归还</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>暂无借阅记录</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

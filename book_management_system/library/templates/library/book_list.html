@@ -2,40 +2,103 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2>图书列表</h2>
-    
-    <!-- 搜索框 -->
     <div class="row mb-4">
         <div class="col-md-6">
-            <form action="{% url 'search_books' %}" method="get" class="d-flex">
-                <input type="text" name="q" class="form-control me-2" placeholder="搜索书名、作者或ISBN">
+            <h2>图书列表</h2>
+        </div>
+        <div class="col-md-6">
+            <form method="get" class="d-flex">
+                <input type="text" name="query" class="form-control me-2" placeholder="搜索书名、作者、ISBN或分类" value="{{ query }}">
                 <button type="submit" class="btn btn-outline-primary">搜索</button>
             </form>
         </div>
     </div>
 
-    <!-- 图书列表 -->
-    <div class="row">
+    <div class="row row-cols-1 row-cols-md-3 g-4">
         {% for book in books %}
-        <div class="col-md-4 mb-4">
+        <div class="col">
             <div class="card h-100">
                 {% if book.cover_image_url %}
-                <img src="{{ book.cover_image_url }}" class="card-img-top" alt="{{ book.title }}" style="height: 200px; object-fit: cover;">
+                <img src="{{ book.cover_image_url }}" class="card-img-top" alt="{{ book.title }}">
                 {% endif %}
                 <div class="card-body">
                     <h5 class="card-title">{{ book.title }}</h5>
-                    <p class="card-text">作者：{{ book.author }}</p>
-                    <p class="card-text">ISBN：{{ book.isbn }}</p>
-                    <p class="card-text">可借数量：{{ book.available_quantity }}</p>
-                    <a href="{% url 'book_detail' book.id %}" class="btn btn-primary">查看详情</a>
+                    <p class="card-text">
+                        <strong>作者：</strong>{{ book.author }}<br>
+                        <strong>ISBN：</strong>{{ book.isbn }}<br>
+                        <strong>出版社：</strong>{{ book.publisher }}<br>
+                        <strong>分类：</strong>{{ book.category.name }}<br>
+                        <strong>位置：</strong>{{ book.location.location_name }}<br>
+                        <strong>可借数量：</strong>{{ book.available_quantity }}
+                    </p>
+                    {% if book.description %}
+                    <p class="card-text">{{ book.description|truncatewords:30 }}</p>
+                    {% endif %}
+                    {% if book.available_quantity > 0 %}
+                    <button class="btn btn-primary borrow-btn" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#borrowConfirmModal"
+                            data-book-id="{{ book.id }}"
+                            data-book-title="{{ book.title }}">
+                        借阅
+                    </button>
+                    {% else %}
+                    <button class="btn btn-secondary" disabled>已借完</button>
+                    {% endif %}
                 </div>
             </div>
         </div>
         {% empty %}
         <div class="col-12">
-            <p class="text-center">暂无图书</p>
+            <p class="text-center">未找到相关图书</p>
         </div>
         {% endfor %}
     </div>
+
+    <!-- 借阅确认对话框 -->
+    <div class="modal fade" id="borrowConfirmModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">确认借阅</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>您确定要借阅《<span id="bookTitle"></span>》吗？</p>
+                    <p>应还日期：<span id="dueDate"></span></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <form id="borrowForm" method="post" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary">确认借阅</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('borrowConfirmModal');
+    const borrowButtons = document.querySelectorAll('.borrow-btn');
+    
+    borrowButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const bookId = this.dataset.bookId;
+            const bookTitle = this.dataset.bookTitle;
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 30);
+            
+            document.getElementById('bookTitle').textContent = bookTitle;
+            document.getElementById('dueDate').textContent = dueDate.toLocaleDateString();
+            document.getElementById('borrowForm').action = `/library/borrow/${bookId}/`;
+        });
+    });
+});
+</script>
+{% endblock %}
+
 {% endblock %}
